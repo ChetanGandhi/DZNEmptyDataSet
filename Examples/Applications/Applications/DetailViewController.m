@@ -13,6 +13,7 @@
 
 @interface DetailViewController () <DZNEmptyDataSetSource, DZNEmptyDataSetDelegate>
 @property (nonatomic, strong) Application *application;
+@property (nonatomic, getter=isLoading) BOOL loading;
 @end
 
 @implementation DetailViewController
@@ -34,7 +35,7 @@
     [super viewDidLoad];
     
     self.edgesForExtendedLayout = UIRectEdgeNone;
-
+    
     self.tableView.emptyDataSetSource = self;
     self.tableView.emptyDataSetDelegate = self;
     
@@ -48,12 +49,17 @@
     [self configureNavigationBar];
 }
 
+
+#pragma mark - Configuration and Event Methods
+
 - (void)configureNavigationBar
 {
     UIColor *barColor = nil;
     UIColor *tintColor = nil;
     UIStatusBarStyle barstyle = UIStatusBarStyleDefault;
     
+    self.navigationController.navigationBar.titleTextAttributes = nil;
+
     switch (self.application.type) {
         case ApplicationType500px:
         {
@@ -71,8 +77,9 @@
         case ApplicationTypeCamera:
         {
             barColor = [UIColor colorWithHex:@"595959"];
+            tintColor = [UIColor whiteColor];
             barstyle = UIStatusBarStyleLightContent;
-            self.navigationController.navigationBar.titleTextAttributes = @{NSForegroundColorAttributeName: [UIColor whiteColor]};
+            self.navigationController.navigationBar.titleTextAttributes = @{NSForegroundColorAttributeName: tintColor};
             break;
         }
         case ApplicationTypeDropbox:
@@ -187,7 +194,13 @@
     }
     
     UIImage *logo = [UIImage imageNamed:[NSString stringWithFormat:@"logo_%@", [self.application.displayName lowercaseString]]];
-    if (logo) self.navigationItem.titleView = [[UIImageView alloc] initWithImage:logo];
+    if (logo) {
+        self.navigationItem.titleView = [[UIImageView alloc] initWithImage:logo];
+    }
+    else {
+        self.navigationItem.titleView = nil;
+        self.navigationItem.title = self.application.displayName;
+    }
     
     self.navigationController.navigationBar.barTintColor = barColor;
     self.navigationController.navigationBar.tintColor = tintColor;
@@ -207,7 +220,6 @@
     }
     
     if (imageName) {
-        
         UIImageView *imageView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:imageName]];
         imageView.userInteractionEnabled = YES;
         
@@ -216,13 +228,65 @@
         
         self.tableView.tableHeaderView = imageView;
     }
+    else {
+        self.tableView.tableHeaderView = [UIView new];
+    }
     
     self.tableView.tableFooterView = [UIView new];
+}
+
+- (void)setAllowShuffling:(BOOL)allow
+{
+    _allowShuffling = allow;
+    
+    UIBarButtonItem *rightItem = nil;
+    
+    if (allow) {
+        rightItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemRefresh target:self action:@selector(shuffle:)];
+    }
+    
+    self.navigationItem.rightBarButtonItem = rightItem;
 }
 
 - (void)didTapHeaderView:(id)sender
 {
     NSLog(@"%s",__FUNCTION__);
+}
+
+- (void)shuffle:(id)sender
+{
+    Application *randomApp = [self randomApplication];
+    
+    while ([randomApp.identifier isEqualToString:self.application.identifier] || randomApp.type == ApplicationTypeUndefined) {
+        randomApp = [self randomApplication];
+    }
+    
+    self.application = randomApp;
+    
+    [self configureHeaderAndFooter];
+    [self configureNavigationBar];
+    
+    [self.tableView reloadEmptyDataSet];
+}
+
+- (Application *)randomApplication
+{
+    ApplicationType randomType = arc4random() % ApplicationCount;
+
+    NSPredicate *query = [NSPredicate predicateWithFormat:@"type == %d", randomType];
+    
+    return [[self.applications filteredArrayUsingPredicate:query] firstObject];
+}
+
+- (void)setLoading:(BOOL)loading
+{
+    if (self.isLoading == loading) {
+        return;
+    }
+    
+    _loading = loading;
+    
+    [self.tableView reloadEmptyDataSet];
 }
 
 
@@ -360,7 +424,7 @@
         }
         case ApplicationTypeRemote:
         {
-            text = @"Cannot Connect to a\nLocal Network";
+            text = @"Cannot Connect to a Local Network";
             font = [UIFont fontWithName:@"HelveticaNeue-Medium" size:18.0];
             textColor = [UIColor colorWithHex:@"555555"];
             break;
@@ -382,7 +446,7 @@
         case ApplicationTypeVesper:
         {
             text = @"No Notes";
-            font = [UIFont fontWithName:@"IdealSans-Medium" size:16.0];
+            font = [UIFont fontWithName:@"IdealSans-Book-Pro" size:16.0];
             textColor = [UIColor colorWithHex:@"d9dce1"];
             break;
         }
@@ -444,14 +508,14 @@
     switch (self.application.type) {
         case ApplicationType500px:
         {
-            text = @"Get started by uploading a\nphoto.";
+            text = @"Get started by uploading a photo.";
             font = [UIFont boldSystemFontOfSize:15.0];
             textColor = [UIColor colorWithHex:@"545454"];
             break;
         }
         case ApplicationTypeAirbnb:
         {
-            text = @"When you have messages, you’ll\nsee them here.";
+            text = @"When you have messages, you’ll see them here.";
             font = [UIFont systemFontOfSize:13.0];
             textColor = [UIColor colorWithHex:@"cfcfcf"];
             paragraph.lineSpacing = 4.0;
@@ -494,7 +558,7 @@
         }
         case ApplicationTypeiCloud:
         {
-            text = @"Share photos and videos with\njust the people you choose, and let them add photos,\nvideos, and comments.";
+            text = @"Share photos and videos with just the people you choose, and let them add photos, videos, and comments.";
             paragraph.lineSpacing = 2.0;
             break;
         }
@@ -508,13 +572,13 @@
         }
         case ApplicationTypeiTunesConnect:
         {
-            text = @"To add a favorite, tap the star icon next\nto an App's name.";
+            text = @"To add a favorite, tap the star icon next to an App's name.";
             font = [UIFont systemFontOfSize:14.0];
             break;
         }
         case ApplicationTypeKickstarter:
         {
-            text = @"When you back a project or follow a friend,\ntheir activity will show up here.";
+            text = @"When you back a project or follow a friend, their activity will show up here.";
             font = [UIFont systemFontOfSize:14.0];
             textColor = [UIColor colorWithHex:@"828587"];
             break;
@@ -533,7 +597,7 @@
         }
         case ApplicationTypePodcasts:
         {
-            text = @"You can subscribe to podcasts in\nTop Charts or Featured.";
+            text = @"You can subscribe to podcasts in Top Charts or Featured.";
             break;
         }
         case ApplicationTypeRemote:
@@ -552,7 +616,7 @@
         }
         case ApplicationTypeSkype:
         {
-            text = @"Keep all your favorite people\ntogether, add favorites.";
+            text = @"Keep all your favorite people together, add favorites.";
             font = [UIFont fontWithName:@"HelveticaNeue-Light" size:17.75];
             textColor = [UIColor colorWithHex:@"a6c3d1"];
             paragraph.lineSpacing = 3.0;
@@ -560,7 +624,7 @@
         }
         case ApplicationTypeSlack:
         {
-            text = @"You don't have any\nrecent mentions";
+            text = @"You don't have any recent mentions";
             font = [UIFont fontWithName:@"Lato-Regular" size:19.0];
             textColor = [UIColor colorWithHex:@"d7d7d7"];
             break;
@@ -635,10 +699,27 @@
 
 - (UIImage *)imageForEmptyDataSet:(UIScrollView *)scrollView
 {
-    NSString *imageName = [[[NSString stringWithFormat:@"placeholder_%@", self.application.displayName] lowercaseString]
-                           stringByReplacingOccurrencesOfString:@" " withString:@"_"];
+    if (self.isLoading) {
+        return [UIImage imageNamed:@"loading_imgBlue_78x78"];
+    }
+    else {
+        NSString *imageName = [[[NSString stringWithFormat:@"placeholder_%@", self.application.displayName] lowercaseString]
+                               stringByReplacingOccurrencesOfString:@" " withString:@"_"];
+        
+        return [UIImage imageNamed:imageName];
+    }
+}
+
+- (CAAnimation *)imageAnimationForEmptyDataSet:(UIScrollView *)scrollView
+{
+    CABasicAnimation *animation = [CABasicAnimation animationWithKeyPath:@"transform"];
+    animation.fromValue = [NSValue valueWithCATransform3D:CATransform3DIdentity];
+    animation.toValue = [NSValue valueWithCATransform3D: CATransform3DMakeRotation(M_PI_2, 0.0, 0.0, 1.0) ];
+    animation.duration = 0.25;
+    animation.cumulative = YES;
+    animation.repeatCount = MAXFLOAT;
     
-    return [UIImage imageNamed:imageName];
+    return animation;
 }
 
 - (NSAttributedString *)buttonTitleForEmptyDataSet:(UIScrollView *)scrollView forState:(UIControlState)state
@@ -764,15 +845,17 @@
     }
 }
 
-- (CGPoint)offsetForEmptyDataSet:(UIScrollView *)scrollView
+- (CGFloat)verticalOffsetForEmptyDataSet:(UIScrollView *)scrollView
 {
     if (self.application.type == ApplicationTypeKickstarter) {
-        return CGPointMake(0, -100.0);
+        CGFloat offset = CGRectGetHeight([UIApplication sharedApplication].statusBarFrame);
+        offset += CGRectGetHeight(self.navigationController.navigationBar.frame);
+        return -offset;
     }
     if (self.application.type == ApplicationTypeTwitter) {
-        return CGPointMake(0, -roundf(self.tableView.frame.size.height/2.5));
+        return -roundf(self.tableView.frame.size.height/2.5);
     }
-    return CGPointZero;
+    return 0.0;
 }
 
 - (CGFloat)spaceHeightForEmptyDataSet:(UIScrollView *)scrollView
@@ -817,41 +900,35 @@
     return YES;
 }
 
-- (void)emptyDataSetDidTapView:(UIScrollView *)scrollView
+- (BOOL)emptyDataSetShouldAnimateImageView:(UIScrollView *)scrollView
 {
-    NSLog(@"%s",__FUNCTION__);
+    return self.isLoading;
 }
 
-- (void)emptyDataSetDidTapButton:(UIScrollView *)scrollView
+- (void)emptyDataSet:(UIScrollView *)scrollView didTapView:(UIView *)view
 {
-    NSLog(@"%s",__FUNCTION__);
+    self.loading = YES;
+    
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        self.loading = NO;
+    });
 }
 
-
-#pragma mark - View lifeterm
-
-- (void)didReceiveMemoryWarning
+- (void)emptyDataSet:(UIScrollView *)scrollView didTapButton:(UIButton *)button
 {
-    [super didReceiveMemoryWarning];
-}
-
-- (void)viewDidUnload
-{
-    [super viewDidUnload];
-}
-
-- (void)dealloc
-{
-    self.tableView.emptyDataSetSource = nil;
-    self.tableView.emptyDataSetDelegate = nil;
+    self.loading = YES;
+    
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        self.loading = NO;
+    });
 }
 
 
 #pragma mark - View Auto-Rotation
 
-- (NSUInteger)supportedInterfaceOrientations
+- (UIInterfaceOrientationMask)supportedInterfaceOrientations
 {
-    return UIInterfaceOrientationPortrait;
+    return UIInterfaceOrientationMaskAll;
 }
 
 - (BOOL)shouldAutorotate

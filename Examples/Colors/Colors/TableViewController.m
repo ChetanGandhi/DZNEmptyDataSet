@@ -132,8 +132,9 @@
     return NO;
 }
 
-- (void)emptyDataSetDidTapView:(UIScrollView *)scrollView
+- (void)emptyDataSet:(UIScrollView *)scrollView didTapView:(UIView *)view
 {
+
     NSLog(@"%s",__FUNCTION__);
 }
 
@@ -229,6 +230,19 @@
             if (color.hex.length > 0) [[UIPasteboard generalPasteboard] setString:color.hex];
         }
     });
+}
+
+
+#pragma mark - View Auto-Rotation
+
+- (NSUInteger)supportedInterfaceOrientations
+{
+    return UIInterfaceOrientationMaskAll;
+}
+
+- (BOOL)shouldAutorotate
+{
+    return YES;
 }
 
 @end

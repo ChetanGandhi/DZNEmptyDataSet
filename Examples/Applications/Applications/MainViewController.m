@@ -105,11 +105,6 @@
     return attributedString;
 }
 
-- (UIImage *)imageForEmptyDataSet:(UIScrollView *)scrollView
-{
-    return [UIImage imageNamed:nil];
-}
-
 - (NSAttributedString *)buttonTitleForEmptyDataSet:(UIScrollView *)scrollView forState:(UIControlState)state
 {
     NSString *text = @"Search on the App Store";
@@ -151,13 +146,14 @@
     return YES;
 }
 
-- (void)emptyDataSetDidTapView:(UIScrollView *)scrollView
+- (void)emptyDataSet:(UIScrollView *)scrollView didTapView:(UIView *)view
 {
     NSLog(@"%s",__FUNCTION__);
 }
 
-- (void)emptyDataSetDidTapButton:(UIScrollView *)scrollView
+- (void)emptyDataSet:(UIScrollView *)scrollView didTapButton:(UIButton *)button
 {
+
     UISearchBar *searchBar = self.searchDisplayController.searchBar;
 
     NSURL *URL = [NSURL URLWithString:[NSString stringWithFormat:@"http://itunes.com/apps/%@", searchBar.text]];
@@ -222,6 +218,8 @@
 {
     Application *app = [[self filteredApps] objectAtIndex:indexPath.row];
     DetailViewController *controller = [[DetailViewController alloc] initWithApplication:app];
+    controller.applications = self.applications;
+    controller.allowShuffling = YES;
     
     [self.navigationController pushViewController:controller animated:YES];
 }
@@ -241,27 +239,27 @@
 
 - (void)searchBarTextDidBeginEditing:(UISearchBar *)searchBar
 {
-    
+    // Do something
 }
 
 - (void)searchBarTextDidEndEditing:(UISearchBar *)searchBar
 {
-
+    // Do something
 }
 
 - (void)searchBarCancelButtonClicked:(UISearchBar *)searchBar
 {
-    
+    // Do something
 }
 
 - (void)searchBarSearchButtonClicked:(UISearchBar *)searchBar
 {
-    
+    // Do something
 }
 
 - (void)searchBar:(UISearchBar *)searchBar textDidChange:(NSString *)searchText
 {
-    
+    // Do something
 }
 
 
@@ -269,22 +267,35 @@
 
 - (void)searchDisplayControllerDidBeginSearch:(UISearchDisplayController *)controller
 {
-
+    // Do something
 }
 
 - (void)searchDisplayControllerDidEndSearch:(UISearchDisplayController *)controller
 {
-
+    // Do something
 }
 
 - (void)searchDisplayController:(UISearchDisplayController *)controller didShowSearchResultsTableView:(UITableView *)tableView
 {
-
+    // Do something
 }
 
 - (void)searchDisplayController:(UISearchDisplayController *)controller didLoadSearchResultsTableView:(UITableView *)tableView
 {
-    
+    // Do something
+}
+
+
+#pragma mark - View Auto-Rotation
+
+- (UIInterfaceOrientationMask)supportedInterfaceOrientations
+{
+    return UIInterfaceOrientationMaskAll;
+}
+
+- (BOOL)shouldAutorotate
+{
+    return YES;
 }
 
 @end

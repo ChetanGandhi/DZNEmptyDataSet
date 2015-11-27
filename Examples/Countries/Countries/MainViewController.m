@@ -52,7 +52,7 @@
     
     self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemRefresh target:self action:@selector(reloadContent:)];
     
-    self.loading = NO;
+    self.loading = YES;
     
     [self.view addSubview:self.tableView];
     [self.view addSubview:self.searchBar];
@@ -233,15 +233,17 @@
     return YES;
 }
 
-- (void)emptyDataSetDidTapView:(UIScrollView *)scrollView
+- (void)emptyDataSet:(UIScrollView *)scrollView didTapView:(UIView *)view
 {
+
     if ([self.searchBar isFirstResponder]) {
         [self.searchBar resignFirstResponder];
     }
 }
 
-- (void)emptyDataSetDidTapButton:(UIScrollView *)scrollView
+- (void)emptyDataSet:(UIScrollView *)scrollView didTapButton:(UIButton *)button
 {
+
     if ([self.searchBar isFirstResponder] && UIDeviceOrientationIsLandscape([UIDevice currentDevice].orientation)) {
         return;
     }
@@ -251,6 +253,11 @@
     if ([[UIApplication sharedApplication] canOpenURL:URL]) {
         [[UIApplication sharedApplication] openURL:URL];
     }
+}
+
+- (CGPoint)offsetForEmptyDataSet:(UIScrollView *)scrollView
+{
+    return CGPointZero;
 }
 
 
@@ -542,24 +549,10 @@
 
 #pragma mark - View lifeterm
 
-- (void)didReceiveMemoryWarning
-{
-    [super didReceiveMemoryWarning];
-}
-
-- (void)viewDidUnload
-{
-    [super viewDidUnload];
-}
-
 - (void)dealloc
 {
     [[NSNotificationCenter defaultCenter] removeObserver:self name:UIKeyboardWillShowNotification object:nil];
     [[NSNotificationCenter defaultCenter] removeObserver:self name:UIKeyboardWillHideNotification object:nil];
-    
-    _tableView.emptyDataSetSource = nil;
-    _tableView.emptyDataSetDelegate = nil;
-    _tableView = nil;
 }
 
 @end
